@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from cmath import exp
 import os
 import re
 import json
@@ -13,12 +14,20 @@ RegexType = type(re.compile(''))
 class AppEnv(object):
 
     def __init__(self):
-        self.app = json.loads(os.getenv('VCAP_APPLICATION', '{}'))
-        self.services = [
-            Service(each)
-            for services in json.loads(os.getenv('VCAP_SERVICES', '{}')).values()
-            for each in services
-        ]
+        cfgFilePath = os.getenv('VCAP_CONFIG_FILE')
+        if not cfgFilePath is None:
+            cfgObj = json.load(cfgFilePath)
+            self.app = cfgObj['VCAP_APPLICATION']
+            self.services = [
+                Service(each) for services in cfgObj['VCAP_SERVICES'] for each in services
+            ]
+        else:
+            self.app = json.loads(os.getenv('VCAP_APPLICATION', '{}'))
+            self.services = [
+                Service(each)
+                for services in json.loads(os.getenv('VCAP_SERVICES', '{}')).values()
+                for each in services
+            ]
 
     @property
     def name(self):
